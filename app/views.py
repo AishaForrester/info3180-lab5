@@ -8,7 +8,9 @@ This file creates your application.
 from app import app
 from flask import render_template, request, jsonify, send_file
 import os
-
+from app.forms import MovieForm
+from werkzeug.utils import secure_filename
+from app.models import db, Movie
 
 ###
 # Routing for your application.
@@ -61,3 +63,34 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
+
+@app.route('/api/v1/movies', methods=['POST'])
+def movies():
+    form = MovieForm()
+    if form.validate_on_submit():
+        # Get file data and save to your uploads folder
+        file = form.poster.data  # getting the file data (image)
+
+        if file:
+            filename = secure_filename(file.filename)
+            # Save to the uploads folder
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            # Create and save the movie to the database
+            movie = Movie(
+                title=form.title.data,
+                description=form.description.data,
+                poster=filename  # only store the filename, not the full path
+            )
+            db.session.add(movie)
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Movie added successfully',
+                'title': movie.title,
+                'poster': movie.poster,
+                'description': movie.description
+            }), 201  # HTTP status code for created
+
+    return jsonify({'errors': form_errors(form)}), 400  # Return errors if validation fails
