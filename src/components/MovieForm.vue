@@ -1,6 +1,18 @@
 <!-- This is where we have our reusable components such as our input field, forms, modals cards etc -->
 
 <template>
+    <!-- Success message -->
+    <div v-if="successMessage" class="alert alert-success">
+      {{ successMessage }}
+    </div>
+
+    <!-- Error messages -->
+    <div v-if="errors.length" class="alert alert-danger">
+      <ul>
+        <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
+      </ul>
+    </div>
+
     <form id="movieForm" @submit.prevent="saveMovie" enctype="multipart/form-data">
 
     <div class="form-group mb-3">
@@ -25,6 +37,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 let csrf_token = ref("");
+let successMessage = ref("");
+let errors = ref([]);
 
 onMounted(() => {
  getCsrfToken();
@@ -64,13 +78,22 @@ const saveMovie = () => {   //the AJAX allows front-end to speak with backend wi
   }
  })
     .then(function(response) { //this is where we await a response from the endpoint
-      return response.json(); //convert JSON string to json object that we can use
+      return response.json().then(data => {
+        if (response.ok) {
+          successMessage.value = "Movie uploaded sucessfully!";
+          errors.value = [];
+          console.log(data);
+        } else {
+          successMessage.value = "";
+          errors.value = data.errors || ["An error has occured. Please try again."];
+          console.log(data);
+        }
+      }); //convert JSON string to json object that we can use
     })
-    .then(function(data) {  // we use the data here
-      console.log(data);
-  })
     .catch(function(error) {
-      console.log(error);
+      successMessage.value = "";
+      errors.value = ["Something went wrong. Please try again later"];
+      console.log(errors);
     });
 
     
