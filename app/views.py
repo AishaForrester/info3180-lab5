@@ -6,12 +6,15 @@ This file creates your application.
 """
 
 from app import app
-from flask import render_template, request, jsonify, send_file
+from flask import render_template, request, jsonify, send_file, send_from_directory
 import os
 from app.forms import MovieForm
 from werkzeug.utils import secure_filename
 from app.models import db, Movie
 from flask_wtf.csrf import generate_csrf
+
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 ###
 # Routing for your application.
@@ -100,4 +103,22 @@ def movies():
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
  return jsonify({'csrf_token': generate_csrf()})
+
+
+@app.route('/api/v1/movies', methods=['GET'])
+def get_movies():
+    movies = Movie.query.all()
+    movies_list = [{
+        'id': movie.id,
+        'title': movie.title,
+        'description': movie.description,
+        'poster': f"/api/v1/posters/{movie.poster}"
+    } for movie in movies]
+    
+    return jsonify({'movies': movies_list})
+
+@app.route('/api/v1/posters/<filename>')
+def get_poster(filename):
+    return send_from_directory(os.path.join(os.getcwd(), 'uploads'), filename)
+
     
