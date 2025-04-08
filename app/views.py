@@ -11,6 +11,7 @@ import os
 from app.forms import MovieForm
 from werkzeug.utils import secure_filename
 from app.models import db, Movie
+from flask_wtf.csrf import generate_csrf
 
 ###
 # Routing for your application.
@@ -93,4 +94,10 @@ def movies():
                 'description': movie.description
             }), 201  # HTTP status code for created
 
-    return jsonify({'errors': form_errors(form)}), 400  # Return errors if validation fails
+    return jsonify({'errors': form_errors(form)}), 400   #Return errors if validation fails
+
+
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+ return jsonify({'csrf_token': generate_csrf()})
+    
